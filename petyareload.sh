@@ -7,7 +7,7 @@ SERVICE='skyperem.py'
  
 if ps ax | grep -v grep | grep $SERVICE > /dev/null
 then
-    echo "script is already running, OK"
+    echo `date`"script is already running, OK"
 else
     DISPLAY=:0
     export DISPLAY
