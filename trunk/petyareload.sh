@@ -14,6 +14,6 @@ else
     echo $DISPLAY
     echo "No script found"
     pwd
-    cd ~/petya/petya_linux
-    python skyperem.py >> ~/petya/petya.log 2>&1 &
+    cd /srv/petya/petya_linux
+    python skyperem.py >> /srv/petya/petya.log 2>&1 &
 fi
