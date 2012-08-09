@@ -28,22 +28,22 @@ file_chat_hash = codecs.open(os.path.normpath('/srv/petya_cred/chat_hash'),'r','
 chat_hash = file_chat_hash.readline()
 
 file_twi_consumer_key = codecs.open(os.path.normpath('/srv/petya_cred/twi_consumer_key'),'r','utf-8')
-twi_consumer_key = file_twi_consumer_key.readline().rtrim()
+twi_consumer_key = file_twi_consumer_key.readline()
 
 file_twi_consumer_secret = codecs.open(os.path.normpath('/srv/petya_cred/twi_consumer_secret'),'r','utf-8')
-twi_consumer_secret = file_twi_consumer_secret.readline().rtrim()
+twi_consumer_secret = file_twi_consumer_secret.readline()
 
 file_twi_access_token_key = codecs.open(os.path.normpath('/srv/petya_cred/twi_access_token_key'),'r','utf-8')
-twi_access_token_key = file_twi_access_token_key.readline().rtrim()
+twi_access_token_key = file_twi_access_token_key.readline()
 
 file_twi_access_token_secret = codecs.open(os.path.normpath('/srv/petya_cred/twi_access_token_secret'),'r','utf-8')
-twi_access_token_secret = file_twi_access_token_secret.readline().rtrim()
+twi_access_token_secret = file_twi_access_token_secret.readline()
 
 ppisyavr = sk.CreateChatUsingBlob(chat_hash)
-twi = twitter.Api(consumer_key=twi_consumer_key,
-consumer_secret=twi_consumer_secret,
-access_token_key=twi_access_token_key,
-access_token_secret=twi_access_token_secret)
+twi = twitter.Api(consumer_key=twi_consumer_key.rtrim(),
+consumer_secret=twi_consumer_secret.rtrim(),
+access_token_key=twi_access_token_key.rtrim(),
+access_token_secret=twi_access_token_secret.rtrim())
 
 delimiter = '-----------'
 messagecount = 0
