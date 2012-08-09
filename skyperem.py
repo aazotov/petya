@@ -40,10 +40,10 @@ file_twi_access_token_secret = codecs.open(os.path.normpath('/srv/petya_cred/twi
 twi_access_token_secret = file_twi_access_token_secret.readline()
 
 ppisyavr = sk.CreateChatUsingBlob(chat_hash)
-twi = twitter.Api(consumer_key=twi_consumer_key.rtrim(),
-consumer_secret=twi_consumer_secret.rtrim(),
-access_token_key=twi_access_token_key.rtrim(),
-access_token_secret=twi_access_token_secret.rtrim())
+twi = twitter.Api(consumer_key=twi_consumer_key.strip(),
+consumer_secret=twi_consumer_secret.strip(),
+access_token_key=twi_access_token_key.strip(),
+access_token_secret=twi_access_token_secret.strip())
 
 delimiter = '-----------'
 messagecount = 0
