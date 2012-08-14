@@ -27,16 +27,16 @@ sk=Skype4Py.Skype() # Initializing Skype
 file_chat_hash = codecs.open(os.path.normpath('/srv/petya_cred/chat_hash'),'r')
 chat_hash = file_chat_hash.readline()
 
-file_twi_consumer_key = codecs.open(os.path.normpath('/srv/petya_cred/twi_consumer_key'),'r')
+file_twi_consumer_key = codecs.open(os.path.normpath('/srv/petya_cred/twi_consumer_key'),'r','utf-8')
 twi_consumer_key = file_twi_consumer_key.readline()
 
-file_twi_consumer_secret = codecs.open(os.path.normpath('/srv/petya_cred/twi_consumer_secret'),'r')
+file_twi_consumer_secret = codecs.open(os.path.normpath('/srv/petya_cred/twi_consumer_secret'),'r','utf-8')
 twi_consumer_secret = file_twi_consumer_secret.readline()
 
-file_twi_access_token_key = codecs.open(os.path.normpath('/srv/petya_cred/twi_access_token_key'),'r')
+file_twi_access_token_key = codecs.open(os.path.normpath('/srv/petya_cred/twi_access_token_key'),'r','utf-8')
 twi_access_token_key = file_twi_access_token_key.readline()
 
-file_twi_access_token_secret = codecs.open(os.path.normpath('/srv/petya_cred/twi_access_token_secret'),'r')
+file_twi_access_token_secret = codecs.open(os.path.normpath('/srv/petya_cred/twi_access_token_secret'),'r','utf-8')
 twi_access_token_secret = file_twi_access_token_secret.readline()
 
 ppisyavr = sk.CreateChatUsingBlob(chat_hash)
