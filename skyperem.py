@@ -172,47 +172,8 @@ def getlasttweets(chat,person):
 	
 def whoiscupcake(chat,send):	# Shows who is the current cupcake
 	
-	file = codecs.open(os.path.normpath('./res/cupcakesarchive.txt'),'r','utf-8')
-	cupcakes = eval(file.readline())
-	
-	lastdate = cupcakes[-1][1]
-	
-	todaydate = time.localtime().tm_mday, time.localtime().tm_mon
-	
-	if (todaydate != lastdate):
-		
-		questioncount = 50
-
-		while True:
-			member = chat.Members[random.randrange(chat.Members.Count-1)].Handle
-			
-			if member != cupcakes[-1][0]:
-				
-				todaycupcake = member, todaydate
-				cupcakes.append(todaycupcake)
-				
-				file.close()
-				
-				file = codecs.open(os.path.normpath('./res/cupcakesarchive.txt'),'w','utf-8')
-				
-				file.write(str(cupcakes))
-				
-				break
-		
-		name = sk.SearchForUsers(cupcakes[-1][0])[0].FullName if sk.SearchForUsers(cupcakes[-1][0])[0].FullName else cupcakes[-1][0]
-		prop = u'Сегодня пирожок ' + name + '.'
-		
-		chat.SendMessage(prop)
-	
-	else: 
-		if send:
-			
-			name = sk.SearchForUsers(cupcakes[-1][0])[0].FullName if sk.SearchForUsers(cupcakes[-1][0])[0].FullName else cupcakes[-1][0]
-			prop = u'Сегодня пирожок ' + name + '.'
-	
-			chat.SendMessage(prop)
-	
-	file.close()
+	prop = u'Сегодня пирожок Петенька.'
+	chat.SendMessage(prop)
 			
 def whoispussycat(chat):	# Shows who is the current pussycat
 	
@@ -242,23 +203,8 @@ def increment(chat,text):
 
 def whowascupcake(chat):	# Shows previous cupcakes
 	
-	file = codecs.open(os.path.normpath('./res/cupcakesarchive.txt'),'r','utf-8')
-	cupcakes = eval(file.readline())
-	
-	prop = u'В разное время пирожками были: \n\n'
-	
-	for cupcake in reversed(cupcakes[-6:]):
-		
-		fullname = sk.SearchForUsers(cupcake[0])[0].FullName
-		
-		name = fullname if fullname else cupcake[0]
-	
-		prop += name + '    ' + str(cupcake[1][0]) + '.' + str(cupcake[1][1]) + '\n\n'
-	
-	chat.SendMessage(prop)
-	
-	file.close()
-	
+	chat.SendMessage(u'В связи со сложной обстановкой исполняющим обязанности пирожка является Петенька.')
+
 def chgkaccess(chat):
 	
 	hour = time.localtime().tm_hour
@@ -377,12 +323,28 @@ def youtubeinfo(chat,link):	# Shows info on youtube clip
 	soup = BeautifulSoup(video)
 	
 	title = soup.find('meta',attrs={'name':'title'})['content']
-	views = soup.find(True, "watch-view-count").strong.string
+	# views = soup.find(True, "watch-view-count").strong.string
 	
-	info = title + '\n' + views + u' просмотров'
+	info = title + '\n'
 	
 	chat.SendMessage(info)
 	
+def imdbinfo(chat,link):	# Shows info on IMDb entry
+	
+	linkre = re.search('imdb\.com\/title\S+', link , re.S)
+	thelink = linkre.group(0)
+	thelink = 'http://' + thelink
+	raw = urllib2.urlopen(thelink)
+	soup = BeautifulSoup(raw)
+	
+	title = soup.find('meta',attrs={'name':'title'})['content']
+	desc = soup.find('meta',attrs={'name':'description'})['content']
+	
+	info = title + '\n' + desc
+	
+	chat.SendMessage(info)
+	
+
 def youporninfo(chat,link):	# Shows info on youporn clip
 	
 	link = 'http://' + link
@@ -485,12 +447,13 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 			show_recent_rss(Message.Chat,'http://bash.org.ru/rss/',-1)
 		elif Message.Body == '!apple':
 			show_recent_rss(Message.Chat,'http://feeds.macrumors.com/MacRumors-All',0)
-		elif Message.Body == '!bach':
-			bach(Message.Chat)
-		elif Message.Body == '!kmp':
-			show_recent_rss(Message.Chat,'http://killmepls.ru/rss/',2)
-		elif Message.Body == '!voin':
-			coelho(Message.Chat)
+#		elif Message.Body == '!bach':
+#			bach(Message.Chat)
+#		elif Message.Body == '!kmp':
+#			show_recent_rss(Message.Chat,'http://killmepls.ru/rss/',2)
+#			Message.Chat.SendMessage(u'Шлюха!')
+#		elif Message.Body == '!voin':
+#			coelho(Message.Chat)
 		elif Message.Body == '!cook':
 			fetch_recipe(Message.Chat,0)
 		elif Message.Body == '!coook':
@@ -544,12 +507,20 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 			
 			youporninfo(Message.Chat,Message.Body[link:link+25])
 		
+		elif Message.Body.count('imdb.com/title'):
+			
+			imdbinfo(Message.Chat,Message.Body)
+		
 		elif ((Message.Body.count('[x]') or Message.Body.count(u'[х]')) and len(Message.Body.split())>1):
 			post_to_twitter(Message.Body[:-3])
 		
-		elif (Message.Body.count(u'искусств') or Message.Body.count(u'дискурс')):
+		elif (Message.Body.count(u'искусств') or Message.Body.count(u'дискурс') or Message.Body == ')'):
 			Message.Chat.SendMessage(u'Ссу тебе в рот, ' + Message.FromDisplayName)
-	
+		
+		elif (Message.Body.count(u'озвуч')):
+			theword = re.search(u'озвуч\S+', Message.Body , re.S)
+			thewordone = theword.group(0)
+			Message.Chat.SendMessage(re.sub(u'озвуч', u'хуюч', thewordone))
 		else: 
 			
 			global messagecount
@@ -581,7 +552,7 @@ def main():
 	sk.OnUserAuthorizationRequestReceived = OnUserAuthorizationRequestReceived
 	
 	
-	s.enter(600, 1, checkdate, (s,ppisyavr))	# Cupcake update scheduling
+	# s.enter(600, 1, checkdate, (s,ppisyavr))	# Cupcake update scheduling
 	s.run()
 	
 
