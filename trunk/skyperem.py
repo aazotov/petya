@@ -158,7 +158,7 @@ def post_to_twitter(message):	# Post message to twitter module
 	
 def getlasttweets(chat,person):
 	
-	statuses = twi.GetUserTimeline(person)
+	statuses = twi.GetUserTimeline(screen_name=person)
    	list =  [s.text for s in statuses]
 	
 	s =''
