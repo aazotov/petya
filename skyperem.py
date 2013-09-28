@@ -21,6 +21,8 @@ import sched
 import httplib2
 import re
 import types
+import MySQLdb
+import datetime
 
 sk=Skype4Py.Skype() # Initializing Skype
 
@@ -39,13 +41,19 @@ twi_access_token_key = file_twi_access_token_key.readline()
 file_twi_access_token_secret = codecs.open(os.path.normpath('/srv/petya_cred/twi_access_token_secret'),'r','utf-8')
 twi_access_token_secret = file_twi_access_token_secret.readline()
 
+file_db_password=codecs.open(os.path.normpath('/srv/petya_cred/db_password'),'r','utf-8')
+db_password=file_db_password.readline()
+
 ppisyavr = sk.CreateChatUsingBlob(chat_hash)
 twi = twitter.Api(consumer_key=twi_consumer_key.strip(),
 consumer_secret=twi_consumer_secret.strip(),
 access_token_key=twi_access_token_key.strip(),
 access_token_secret=twi_access_token_secret.strip())
 
+db = MySQLdb.connect(host="localhost",user="root",passwd=db_password.strip(),db="petya",charset='utf8')
+
 delimiter = '-----------'
+lastquoteid=1
 messagecount = 0
 questioncount = 50
 global _boardmessage
@@ -73,6 +81,16 @@ SPECIAL_CHARS = {'&lsquo;': '\'',
 
 test = 1
 
+def db_query(sql):
+	db.ping(True)
+	cur = db.cursor()
+	try:
+		cur.execute(sql)
+		db.commit()
+	except:
+		db.rollback()
+	return cur
+
 def http_headers(**headers):
     """
     Rename headers from "user_agent" like notation to traditional User-Agent one
@@ -80,6 +98,19 @@ def http_headers(**headers):
     return dict((('-'.join(map(str.capitalize,i.split('_'))),j) for i,j in headers.items()))
 
 def statistics(chat): # Chat statistics module
+	ss=''
+	curtotal=db_query("select sum(stats_score) as total from stats")
+	total=int(curtotal.fetchone()[0])
+	curstat=db_query("select * from stats order by stats_score desc")
+	for row in curstat.fetchall():
+		fullname=row[0]
+		score=row[2]
+		lastseen=row[3]
+		percentage=round(float(score)/total,4)*100
+		#lastseen=(datetime.datetime.fromtimestamp(int(lastseents)).strftime('%Y-%m-%d %H:%M:%S'))
+		ss+=fullname+'		'+str(score)+'		'+str(percentage)+"%		"+str(lastseen)+'\n'
+	chat.SendMessage(ss)
+	'''
 	dict={}
 	for k in chat.Members:
 		ma = sk.Messages(k.Handle)
@@ -90,6 +121,7 @@ def statistics(chat): # Chat statistics module
 	for s,n in sorted(dict.iteritems(), reverse = True):
 		ss+=n+'		'+str(s)+'\n'
 	chat.SendMessage(ss)
+	'''
 	
 def show_recent_rss(chat,url,links):	# Recent news RSS module
 	feed = feedparser.parse(url)
@@ -181,15 +213,29 @@ def whoispussycat(chat):	# Shows who is the current pussycat
 	
 	chat.SendMessage(prop)
 	
-def addquote(chat,text):
-	
+def addquote(chat,text,author):
+	text=MySQLdb.escape_string(text.encode('utf8','replace'))
+	db_query("insert into quotes (quotes_author,quotes_timestamp,quotes_text,quotes_tags,quotes_active) values ('%s',NULL,'%s','',1)" % (author,text))
+	'''
 	file = codecs.open(os.path.normpath('./res/quotes.txt'),'a','utf-8')
 	file.write(text+'\n')
 	file.close()
-	
+	'''
 	#opost_to_twitter(text)
 	chat.SendMessage(u"Цитата добавлена.")
-
+def who_quote(chat):
+	quotecursor=db_query("select * from quotes where quotes_id="+str(lastquoteid))
+	row=quotecursor.fetchone()
+	handle=row[1]
+	timestamp=row[2]
+	for user in chat.Members:
+		if (handle==user.Handle):
+			fullname=user.FullName
+			break
+	if (fullname==''):
+		fullname="хз кто"
+	chat.SendMessage(u"Эту цитату добавил %s (%s)" % (fullname,str(timestamp)))
+	
 def checkdate(sc,chat):	# Cupcake update module
 	
 	whoiscupcake(chat,0)
@@ -406,7 +452,8 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 		Message.Chat.SendMessage(u'в гробу отоспишься!')
 		
 		someoneleft = False
-
+	if Status == 'SENT':
+		db_query(u"update stats set stats_score=stats_score+1, stats_lastseen=NULL where stats_handle='petrophilia'")
 	if Status == 'RECEIVED':
 		
 		if Message.Type == Skype4Py.cmeLeft:
@@ -437,6 +484,8 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 #					'!pipisyavr' : getlasttweets(Message.Chat,Message.Body[1:])
 
 #					}
+		fullname=Message.FromDisplayName if Message.FromDisplayName!='' else Message.FromHandle
+		db_query(u"insert into stats (stats_fullname,stats_handle,stats_score) values ('%s','%s',1) on duplicate key update stats_score=stats_score+1,stats_fullname='%s',stats_lastseen=NULL" % (fullname,Message.FromHandle,fullname))
 		if Message.Body == '!stat':
 			statistics(Message.Chat)
 		elif Message.Body == '!lenta':
@@ -447,8 +496,8 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 			show_recent_rss(Message.Chat,'http://bash.org.ru/rss/',-1)
 		elif Message.Body == '!apple':
 			show_recent_rss(Message.Chat,'http://feeds.macrumors.com/MacRumors-All',0)
-#		elif Message.Body == '!bach':
-#			bach(Message.Chat)
+		elif Message.Body == '!who':
+			who_quote(Message.Chat)
 #		elif Message.Body == '!kmp':
 #			show_recent_rss(Message.Chat,'http://killmepls.ru/rss/',2)
 #			Message.Chat.SendMessage(u'Шлюха!')
@@ -463,7 +512,7 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 		elif Message.Body == '!cupcakes':
 			whowascupcake(Message.Chat)
 		elif Message.Body.count('!quote'):
-			addquote(Message.Chat,Message.Body[7:])
+			addquote(Message.Chat,Message.Body[7:],Message.FromHandle)
 		elif Message.Body.count('++'):
 			increment(Message.Chat,Message.Body[:Message.Body.index('++')])
 		elif Message.Body == '!pussycat':
@@ -524,8 +573,17 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 		else: 
 			
 			global messagecount
-			if (messagecount == 50) or type(re.search(u'[Пп]ет.н', Message.Body, re.I|re.M)) != types.NoneType or type(re.search(u'[Пп]етя', Message.Body , re.I|re.M)) != types.NoneType:
+			global lastquoteid
+			if (messagecount == 50) or type(re.search(u'[Пп]ет.н', Message.Body, re.I|re.M)) != types.NoneType or type(re.search(u'[Пп]ет[яю]', Message.Body , re.I|re.M)) != types.NoneType:
 				messagecount = 0
+				quotecursor=db_query("SELECT quotes_id, quotes_text from quotes where quotes_active=1 order by rand() limit 1")
+				row=quotecursor.fetchone()
+				quoteid=row[0]
+				quotetext=row[1]
+				finalquote=quotetext.replace('username',Message.FromDisplayName)
+				Message.Chat.SendMessage(finalquote)
+				lastquoteid=quoteid
+				'''
 				file = codecs.open(os.path.normpath('./res/quotes.txt'),'r','utf-8')
 				quotes = file.readlines()
 
@@ -533,6 +591,7 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 				Message.Chat.SendMessage(finalquote)
 				
 				file.close()
+				'''
 			else:
 				messagecount+=1
 				
