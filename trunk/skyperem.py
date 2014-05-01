@@ -110,19 +110,24 @@ def statistics(chat): # Chat statistics module
 		#lastseen=(datetime.datetime.fromtimestamp(int(lastseents)).strftime('%Y-%m-%d %H:%M:%S'))
 		ss+=fullname+'		'+str(score)+'		'+str(percentage)+"%		"+str(lastseen)+'\n'
 	chat.SendMessage(ss)
-	'''
-	dict={}
-	for k in chat.Members:
-		ma = sk.Messages(k.Handle)
-		l=len(ma)
-		print l
-		dict[l]=k.FullName if k.FullName!='' else k.Handle
-	ss=''
-	for s,n in sorted(dict.iteritems(), reverse = True):
-		ss+=n+'		'+str(s)+'\n'
-	chat.SendMessage(ss)
-	'''
-	
+
+def NextGet(chat): # Chat statistics module
+	nextname = ''
+	nextget=0
+	nextleft = sys.maxsize
+	curstat=db_query("select * from stats order by stats_score desc")
+	for row in curstat.fetchall():
+		fullname=row[0]
+		score=int(row[2])
+		if score<1000:
+			continue
+		nearestget=int(NearestGet(score))
+		if nearestget - score < nextleft:
+			nextleft = nearestget - score
+			nextget = nearestget
+			nextname = fullname
+	chat.SendMessage(u'Следующий гет ' + str(nextget) + u' у ' + nextname + u' (осталось ' + str(nextleft) + ')')
+
 def show_recent_rss(chat,url,links):	# Recent news RSS module
 	feed = feedparser.parse(url)
 	paragraph = ''
@@ -429,6 +434,25 @@ def add(chat, handle):
 	
 	chat.AddMembers(sk.User(handle))
 
+def NearestGet(number):
+	inputnumber = int(number)
+	if inputnumber==0:
+		return(1)
+	lng = len(str(inputnumber))
+	botb = pow(10,lng-1)
+	drumsticks = "1"*lng if lng>2 else "111"
+	getsteps = [int(drumsticks),5000]
+	gets = []
+	for getstep in getsteps:
+		nearestget = 0
+		while nearestget < inputnumber:
+			print(str(nearestget))
+			nearestget=nearestget+getstep
+		gets.append(nearestget)
+
+	return(min(gets))
+
+
 def OnUserAuthorizationRequestReceived(User):
 	
 #	print User.BuddyStatus
@@ -486,8 +510,18 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 #					}
 		fullname=Message.FromDisplayName if Message.FromDisplayName!='' else Message.FromHandle
 		db_query(u"insert into stats (stats_fullname,stats_handle,stats_score) values ('%s','%s',1) on duplicate key update stats_score=stats_score+1,stats_fullname='%s',stats_lastseen=NULL" % (fullname,Message.FromHandle,fullname))
+		statcursor=db_query("SELECT stats_score from stats where stats_handle='%s'" % (Message.FromHandle))
+		getscore=statcursor.fetchone()[0]
+		drumsticks = "1"*len(str(getscore)) if len(str(getscore))>2 else "111"
+		if (int(getscore)%5000 == 0) or (int(getscore)%int(drumsticks) == 0):
+			Message.Chat.SendMessage(u'(dance) (party)' + Message.FromDisplayName + ' ' + str(getscore) + u' гет! (party) (dance)' )
 		if Message.Body == '!stat':
 			statistics(Message.Chat)
+		if Message.Body == '!nextget':
+			NextGet(Message.Chat)
+		if Message.Body == '!mynextget':
+			nextget=int(NearestGet(getscore))
+			Message.Chat.SendMessage(u'Следующий гет ' + fullname + ': ' + str(nextget) + u' (осталось ' + str(int(nextget)-int(getscore)) + ')')
 		elif Message.Body == '!lenta':
 			show_recent_rss(Message.Chat,'http://lenta.ru/rss/',0)
 		elif Message.Body == '!news':
