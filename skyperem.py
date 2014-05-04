@@ -115,7 +115,7 @@ def NextGet(chat): # Chat statistics module
 	nextname = ''
 	nextget=0
 	nextleft = sys.maxsize
-	curstat=db_query("select * from stats order by stats_score desc")
+	curstat=db_query("select * from stats WHERE stats_lastseen > (DATE(NOW())-INTERVAL 1 MONTH) order by stats_score desc")
 	for row in curstat.fetchall():
 		fullname=row[0]
 		score=int(row[2])
