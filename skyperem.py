@@ -107,7 +107,6 @@ def statistics(chat): # Chat statistics module
 		score=row[2]
 		lastseen=row[3]
 		percentage=round(float(score)/total,4)*100
-		#lastseen=(datetime.datetime.fromtimestamp(int(lastseents)).strftime('%Y-%m-%d %H:%M:%S'))
 		ss+=fullname+'		'+str(score)+'		'+str(percentage)+"%		"+str(lastseen)+'\n'
 	chat.SendMessage(ss)
 
@@ -221,12 +220,6 @@ def whoispussycat(chat):	# Shows who is the current pussycat
 def addquote(chat,text,author):
 	text=MySQLdb.escape_string(text.encode('utf8','replace'))
 	db_query("insert into quotes (quotes_author,quotes_timestamp,quotes_text,quotes_tags,quotes_active) values ('%s',NULL,'%s','',1)" % (author,text))
-	'''
-	file = codecs.open(os.path.normpath('./res/quotes.txt'),'a','utf-8')
-	file.write(text+'\n')
-	file.close()
-	'''
-	#opost_to_twitter(text)
 	chat.SendMessage(u"Цитата добавлена.")
 def who_quote(chat):
 	quotecursor=db_query("select * from quotes where quotes_id="+str(lastquoteid))
@@ -482,39 +475,14 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 		
 		if Message.Type == Skype4Py.cmeLeft:
 			pass			
-		# next time	
-			
-		#	if Message.FromHandle == leftHandle:
-		#		break	#	practically it should be return there
-	
-		#	leftHandle = Message.FromHandle
-			
-		 #	someoneleft = True
-		#	Message.Chat.SendMessage('/add '+ Message.FromHandle)	# not ok
-#		else:
-#			someoneleft = False	
- #		commands = {'!stat' : statistics(Message.Chat),
-#					'!lenta' : show_recent_rss(Message.Chat,'http://lenta.ru/rss/',0),
-#					'!apple' : show_recent_rss(Message.Chat,'http://feeds.macrumors.com/MacRumors-All',1),
-#					'!news' : show_recent_rss(Message.Chat,'http://lenta.ru/rss/',1),
-#					'!bach' : bach(Message.Chat),
-#					'!cook' : fetch_recipe(Message.Chat,0),
-#					'!coook' : fetch_recipe(Message.Chat,1),
-#					'!cupcake' : whoiscupcake(Message.Chat, 1),
-#					'!cupcakes' : whowascupcake(Message.Chat),
-#					'!pussycat' : whoispussycat(Message.Chat),
-#					'fdf' : lastyandexqueries(Message.Chat),
-#					'!toxal' : getlasttweets(Message.Chat,Message.Body[1:]),
-#					'!pipisyavr' : getlasttweets(Message.Chat,Message.Body[1:])
-
-#					}
+		
 		fullname=Message.FromDisplayName if Message.FromDisplayName!='' else Message.FromHandle
 		db_query(u"insert into stats (stats_fullname,stats_handle,stats_score) values ('%s','%s',1) on duplicate key update stats_score=stats_score+1,stats_fullname='%s',stats_lastseen=NULL" % (fullname,Message.FromHandle,fullname))
 		statcursor=db_query("SELECT stats_score from stats where stats_handle='%s'" % (Message.FromHandle))
 		getscore=statcursor.fetchone()[0]
 		drumsticks = "1"*len(str(getscore)) if len(str(getscore))>2 else "111"
 		if (int(getscore)%5000 == 0) or (int(getscore)%int(drumsticks) == 0):
-			Message.Chat.SendMessage(u'(dance) (party)' + Message.FromDisplayName + ' ' + str(getscore) + u' гет! (party) (dance)' )
+			Message.Chat.SendMessage(u'(dance) (party) ' + Message.FromDisplayName + ' ' + str(getscore) + u' гет! (party) (dance)' )
 		if Message.Body == '!stat':
 			statistics(Message.Chat)
 		if Message.Body == '!nextget':
@@ -532,11 +500,6 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 			show_recent_rss(Message.Chat,'http://feeds.macrumors.com/MacRumors-All',0)
 		elif Message.Body == '!who':
 			who_quote(Message.Chat)
-#		elif Message.Body == '!kmp':
-#			show_recent_rss(Message.Chat,'http://killmepls.ru/rss/',2)
-#			Message.Chat.SendMessage(u'Шлюха!')
-#		elif Message.Body == '!voin':
-#			coelho(Message.Chat)
 		elif Message.Body == '!cook':
 			fetch_recipe(Message.Chat,0)
 		elif Message.Body == '!coook':
@@ -597,8 +560,8 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 		elif ((Message.Body.count('[x]') or Message.Body.count(u'[х]')) and len(Message.Body.split())>1):
 			post_to_twitter(Message.Body[:-3])
 		
-		elif (Message.Body.count(u'искусств') or Message.Body.count(u'дискурс') or Message.Body == ')'):
-			Message.Chat.SendMessage(u'Ссу тебе в рот, ' + Message.FromDisplayName)
+#		elif (Message.Body.count(u'искусств') or Message.Body.count(u'дискурс') or Message.Body == ')'):
+#			Message.Chat.SendMessage(u'Ссу тебе в рот, ' + Message.FromDisplayName)
 		
 		elif (Message.Body.count(u'озвуч')):
 			theword = re.search(u'озвуч\S+', Message.Body , re.S)
@@ -617,19 +580,8 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 				finalquote=quotetext.replace('username',Message.FromDisplayName)
 				Message.Chat.SendMessage(finalquote)
 				lastquoteid=quoteid
-				'''
-				file = codecs.open(os.path.normpath('./res/quotes.txt'),'r','utf-8')
-				quotes = file.readlines()
-
-				finalquote = quotes[random.randrange(len(quotes)-1)].replace('username', Message.FromDisplayName)
-				Message.Chat.SendMessage(finalquote)
-				
-				file.close()
-				'''
 			else:
 				messagecount+=1
-				
-
 
 def main():
 	
