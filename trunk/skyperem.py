@@ -485,15 +485,15 @@ def OnMessageStatus(Message, Status):	# Handles incoming messages
 			Message.Chat.SendMessage(u'(dance) (party) ' + Message.FromDisplayName + ' ' + str(getscore) + u' гет! (party) (dance)' )
 		if Message.Body == '!stat':
 			statistics(Message.Chat)
-		if Message.Body == '!nextget':
+		if (Message.Body == '!nextget') or (Message.Body == '!ng'):
 			NextGet(Message.Chat)
-		if Message.Body == '!mynextget':
+		if (Message.Body == '!mynextget') or (Message.Body == '!mng'):
 			nextget=int(NearestGet(getscore))
 			Message.Chat.SendMessage(u'Следующий гет ' + fullname + ': ' + str(nextget) + u' (осталось ' + str(int(nextget)-int(getscore)) + ')')
 		elif Message.Body == '!lenta':
 			show_recent_rss(Message.Chat,'http://lenta.ru/rss/',0)
 		elif Message.Body == '!news':
-			show_recent_rss(Message.Chat,'http://lenta.ru/rss/',1)
+			show_recent_rss(Message.Chat,'http://static.feed.rbc.ru/rbc/internal/rss.rbc.ru/rbc.ru/newsline.rss',1)
 		elif Message.Body == '!bash':
 			show_recent_rss(Message.Chat,'http://bash.org.ru/rss/',-1)
 		elif Message.Body == '!apple':
